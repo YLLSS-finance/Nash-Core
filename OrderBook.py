@@ -14,12 +14,31 @@ from orderProperties import OrderProperties as op
 
 class orderBook:
     def __init__(self, _master, contractID):
-        self.fillOrder = _master.fillOrder
-        self.cancelOrder = _master.cancelOrder
+        self.fillOrder = _master._fillOrder
+        self.cancelOrder = _master._cancelOrder
         self.contractID = contractID
 
         # price:[head, tail, qty, number of orders]
         self.book = [SortedDict(key=lambda x:-x), SortedDict(key=lambda x:x)]
+        self.bestPrices = [None, None]
+
+    def fillBestLevel(self, side, lmtPrice, maxQty):
+        best_price = self.bestPrices[side]
+        best_level = self.book[side][best_price]
+
+        if side == 0:
+            if lmtPrice > best_price: return False
+        else:
+            if lmtPrice < best_price: return False
+
+        while best_level[3] and maxQty:
+            best_order = best_level[0]
+            fill_qty = min(maxQty, sum(best_order[6]))
+
+            self.fillOrder(best_order[4], fill_qty)
+            maxQty -= fill_qty
+
+        return maxQty
 
     # TODO: optimise this function
     def remove_order(self, order):
@@ -31,10 +50,14 @@ class orderBook:
         side_book = self.book[order_side]
         order_price_level = side_book[order_price]
         order_price_level[2] -= sum(order[6])
-        order_price_level[3] -
+        order_price_level[3] - 1
         if not order_price_level[3]:
-            del self.book[order[5]][order_price]
-            if not self.book[order[5]]:
+            del side_book[order_price]
+            if not side_book:
+                self.bestPrices[order_side] = None
+                return
+            self.bestPrices[order_side] = side_book.peekitem(0)[0]
+
 
 
     def post_order(self, order):

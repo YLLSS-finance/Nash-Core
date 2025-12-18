@@ -56,11 +56,9 @@ class NashCore:
             for margin_manager_contract in required_margin_managers:
                 user_margin_managers[margin_manager_contract] = MarginManager(_master=self, mpid=user, contractID=margin_manager_contract)
 
-        def fillOrder(self, mpid, orderID, price, qty):
-            order = self.userOrders[mpid][orderID]
-            order_contract = order[3]
+        def _fillOrder(self, order, price, qty):
             order_side = order[5]
-            order_margin_manager = self.userMarginManagers[mpid][order_contract]
+            order_margin_manager = self.userMarginManagers[order[2]][order[3]]
             fill_red = min(qty, order[6][0])
             fill_inc = qty - fill_red
 
@@ -68,3 +66,12 @@ class NashCore:
             if fill_inc == order[6][1]: order_margin_manager.increaseOrders[order_side] -= 1
 
             price_improvement = abs(price - order[4])
+
+        def _cancelOrder(self, order):
+            order_margin_manager = self.userMarginManagers[order[2]][order[3]]
+            order_side = order[5]
+            if order[6][0]: order_margin_manager.reduceOrders[order_side] -= 1
+            if order[6][1]: order_margin_manager.increaseOrders[order_side] -= 1
+
+
+            del self.userOrders[order[2]][order[3]][order[0]]
