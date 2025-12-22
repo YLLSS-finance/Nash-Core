@@ -8,9 +8,7 @@
 # 6 - [red, inc]
 # 7 - [head, tail]
 
-from orderProperties import OrderProperties as op
-from MarginManager import MarginManager as MarginManager
-from OrderBook import OrderBook as OrderBook
+from new.OrderBook import OrderBook as OrderBook
 
 class NashCore:
     def __init__(self, userBalances={}, userOrders={}, userPositions={}, contracts={}):

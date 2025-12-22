@@ -22,6 +22,9 @@ class orderBook:
         self.book = [SortedDict(key=lambda x:-x), SortedDict(key=lambda x:x)]
         self.bestPrices = [None, None]
 
+    def addOrder(self, order):
+
+
     def fillBestLevel(self, side, lmtPrice, maxQty):
         best_price = self.bestPrices[side]
         best_level = self.book[side][best_price]
@@ -57,8 +60,6 @@ class orderBook:
                 self.bestPrices[order_side] = None
                 return
             self.bestPrices[order_side] = side_book.peekitem(0)[0]
-
-
 
     def post_order(self, order):
         order[7] = [None, None]

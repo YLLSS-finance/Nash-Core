@@ -9,9 +9,9 @@
 # 6 - [red, inc]
 # 7 - [head, tail]
 
-from orderProperties import OrderProperties as op
-from MarginManager import MarginManager as MarginManager
-from OrderBook import OrderBook as OrderBook
+from new.orderProperties import OrderProperties as op
+from new.MarginManager import MarginManager as MarginManager
+from new.OrderBook import OrderBook as OrderBook
 
 class NashCore:
     def __init__(self, userBalances={}, userOrders={}, userPositions={}, contracts={}):
@@ -72,6 +72,5 @@ class NashCore:
             order_side = order[5]
             if order[6][0]: order_margin_manager.reduceOrders[order_side] -= 1
             if order[6][1]: order_margin_manager.increaseOrders[order_side] -= 1
-
 
             del self.userOrders[order[2]][order[3]][order[0]]
