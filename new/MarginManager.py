@@ -7,7 +7,7 @@
 # 4 - price
 # 5 - side
 # 6 - [red, inc]
-# 7 - [head, tail]
+# 7 - [head, tail] 
 
 from sortedcontainers import SortedList
 from new.orderProperties import OrderProperties as op
