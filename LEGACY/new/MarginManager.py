@@ -10,7 +10,7 @@
 # 7 - [head, tail]
 
 from sortedcontainers import SortedList
-from new.orderProperties import OrderProperties as op
+from LEGACY.new.orderProperties import OrderProperties as op
 
 class MarginManager:
     def __init__(self, _master, mpid, contractID):
