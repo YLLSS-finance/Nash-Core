@@ -8,7 +8,7 @@
 # 6 - [red, inc]
 # 7 - [head, tail]
 
-from new.OrderBook import OrderBook as OrderBook
+from LEGACY.new.OrderBook import OrderBook as OrderBook
 
 class NashCore:
     def __init__(self, userBalances={}, userOrders={}, userPositions={}, contracts={}):
