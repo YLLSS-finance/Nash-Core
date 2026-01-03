@@ -30,7 +30,7 @@ class MarginManager:
         for order in self.userOrders:
             if order[3] == self.contractID:
                 order_side = order[5]
-                # Add order into the sorted list
+                 # Add order into the sorted list
                 self.contractOrders[order_side].add(order)
                 self.reducible[1 - order_side] -= order[6][0]
                 self.userBalances[1] -= op.TotalCost(order)
@@ -49,8 +49,8 @@ class MarginManager:
 
         # Swap: new order inc-->red | existing order red --> inc
         cur_redorders = self.reduceOrders[side]
+        transfer_lst = []
         if inc and cur_redorders:
-            transfer_lst = []
             cur_contractorders = self.contractOrders[side]
             for existing_order_index in range(cur_redorders, -1, -1):
                 existing_order = cur_contractorders[existing_order_index]
