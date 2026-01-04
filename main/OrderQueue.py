@@ -15,9 +15,10 @@ class orderQueue:
     def __init__(self, side, fill_order, remove_order):
         self.side = side
         self.levels = SortedDict(key=lambda x:-x) if side == 0 else SortedDict()
+        self.crossing = self._crossing_buy if side == 1 else self._crossing_selle
         self.topOfBook = None
-        self.fill_order = fill_order
-        self.cancel_order = remove_order
+        self._fill_order = fill_order
+        self._cancel_order = remove_order
     
     @property
     def best_price_qty(self):
@@ -25,6 +26,12 @@ class orderQueue:
             price, lvlInfo = self.levels.peekitem(0)
             return [price, lvlInfo[2]]
         return
+    
+    def _crossing_buy(self, price):
+        return price >= self.best_price_qty[0]
+    
+    def _crossing_sell(self, price):
+        return price <= self.best_price_qty[0]
     
     def initialize(self, orders):
         # Add initial list of orders to a unsorted dictionary, keyed by price.
@@ -53,19 +60,19 @@ class orderQueue:
         self.topOfBook = self.best_price_qty
     
     def fill_top(self, price, qty):
-        filled_qty = 0        
+        # No fill can be done if the book is empty
+        if not self.topOfBook: return
+        # No fill can be done if the price of the aggressor is not crossing
+        if not self.crossing(price): return
+        
+        best_price = self.topOfBook[0]
+        filled_qty = 0
         while True:
-            # No fill can be done if the book ie empty or if there is no quantity left to fill
-            if not self.topOfBook: break
+            # Terminate the filling process if the aggressing quantity is already fully consumed
             if not qty: break
             
-            best_price = self.topOfBook[0]
-            
             # Book must be locked or crossing to trigger a fill
-            if self.side == 0:
-                if price > best_price: break
-            else:
-                if price < best_price: break
+            if not self.crossing(price): break
             
             # Fetch the order at the head of the top-of-book time queue, called the best order.
             best_order = self.levels[best_price][0]
@@ -73,20 +80,27 @@ class orderQueue:
             # Determine maximum quantity that can be filled
             fill_qty = min(qty, sum(best_order[6]))
             
+            # Fill the order and update variables
             self.fill_order(best_order, best_price, fill_qty)
+            qty -= fill_qty
+            filled_qty += fill_qty
             
             # If the best order is filled, purge that order and break the loop if the top-of-book is changed 
             # as for this function we only want to try and fill at the best level available.
             if not sum(best_order[6]):
                 tob_changed = self.purge_order(best_order)
                 if tob_changed: break
-            
-            # Update variables
-            qty -= fill_qty
-            filled_qty += fill_qty
         
         return best_price, filled_qty
     
+    def fill_aggr_order(self, order):
+        # Self-explanatory. You should know the logic of this if you know what is going on with self.fill_top
+        order_price = order[4]
+        while True:
+            fill_price, fill_qty = self.fill_top(order_price, sum(order[6]))
+            if not fill_qty: break
+            self._fill_order(order, fill_price, fill_qty)
+            
     def post_order(self, order):
         order_price = order[4]
         order_qty = sum(order[6])
