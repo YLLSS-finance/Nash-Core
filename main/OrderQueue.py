@@ -14,7 +14,7 @@ from sortedcontainers import SortedDict
 class orderQueue:
     def __init__(self, side, fill_order, remove_order):
         self.side = side
-        self.levels = SortedDict(key=lambda x:-x) if side == 0 else SortedDict()
+        self.levels = SortedDict(key=lambda x:-x) if side == 0 else SortedDict(key=lambda x:x)
         self.crossing = self._crossing_buy if side == 1 else self._crossing_sell
         self.topOfBook = None
         self._fill_order = fill_order
