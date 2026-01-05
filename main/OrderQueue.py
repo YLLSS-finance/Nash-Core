@@ -27,10 +27,10 @@ class orderQueue:
             return [price, lvlInfo[2]]
         return
     
-    def _crossing_buy(self, price):
+    def _crossing_buy(self, price) -> bool:
         return price >= self.best_price_qty[0]
     
-    def _crossing_sell(self, price):
+    def _crossing_sell(self, price) -> bool:
         return price <= self.best_price_qty[0]
     
     def initialize(self, orders):
