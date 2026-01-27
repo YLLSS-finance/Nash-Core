@@ -13,6 +13,8 @@ class position:
         
         self.cost_function = [lambda x:x, lambda x:100 - x]
         
+    def net
+        
     def insert_order(self, price, side, qty):
         ins_price = -price if side == 0 else price
         
@@ -86,4 +88,24 @@ class position:
             lvl_qtys[0] += net_qty
             lvl_qtys[1] -= net_qty
             
+            # Refund the margin for the order price level that had a quantity moved from the increase side to the reduce side
             self.userBalance[1] += net_qty * self.cost_function[1 - alloc_side](lvl_price)
+    
+    def fill_order(self, order_price, order_side, fill_price, fill_qty):
+        order_level = self.levels[order_side][order_price]
+        fill_red = min(fill_qty, order_level[0])
+        fill_inc = fill_qty - fill_red
+        
+        price_improvement = abs(fill_price - order_price)
+        
+        margin_returned = fill_inc * price_improvement # Increase the available margin bu this amount, this is caused by price improvement
+        
+        fill_cost = self.cost_function[order_side](order_price) * fill_inc
+        
+        self.position[order_side] += fill_inc
+        self.position[1 - order_side] -= fill_red
+        self.reducible[order_side] += fill_inc
+        
+        if fill_inc:
+            self.alloc_reducible_position()
+    
