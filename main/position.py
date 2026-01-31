@@ -2,6 +2,11 @@ from sortedcontainers import SortedDict
 
 
 class position:
+    # This is the position and margin management engine for LVIS Nash.
+    # All operations related to position and margin manipulations are handled by this class.
+    # Note that margin is dynamically recalculated with each operation to reflect the total exposure caused by open order, 
+    # while the user balance only changes when an order is filled, reducing an existing position or increasing it.
+    
     def __init__(self, user_balance):
         self.userBalance = user_balance
 
@@ -10,9 +15,16 @@ class position:
 
         self.levels = [SortedDict(), SortedDict()]
         self.redLevels = [0, 0]
+<<<<<<< HEAD
 
         self.cost_function = [lambda x: x, lambda x: 100 - x]
 
+=======
+        
+        self.cost_function = [lambda x:x, lambda x:100 - x]
+        self.price_mapping = [lambda x:-x, lambda x:x]
+        
+>>>>>>> a97ee9f7515196441d153f2fe5db13a2e04b2157
     def debug(self):
         print("Balances\n", self.userBalance, "\n")
         print("Position\n", self.position, "\n")
@@ -21,6 +33,7 @@ class position:
         print("Reduce Levels\n", self.redLevels, "\n")
 
     def insert_order(self, price, side, qty):
+<<<<<<< HEAD
         # List of Data Manipulations performed
         #
         # Split the order quantity into an reduce and increase component
@@ -65,6 +78,36 @@ class position:
             margin_used -= abs(abs(lvl_price) - price) * swap_qty
 
         if margin_used + self.userBalance[1] > self.userBalance[0]:
+=======
+        
+        # Split the order into an reduce and increase component based on the reducible quantity on the opposite side, and calculate the initial margin used
+        order_red = min(self.reducible[1 - side], qty)
+        order_inc = qty - order_red
+        op_red = order_red
+        margin_used = self.cost_function[side](price) * order_inc
+        
+        side_levels = self.levels[side]
+        swaps = []        
+        
+        # Iterate over all levels with reduce orders in reverse order (price from worst to best)
+        for n in range(self.redLevels[side] - 1, -1, -1):
+            # Check if the order has an increase component and the price level to scan has an reduce component
+            if not order_inc: break
+            lvl_price, lvl_qtys = side_levels.peekitem(n)
+            if not lvl_qtys[0]: break
+            
+            # Check if the price of the incoming order is better than the price of the existing level in the iteration
+            if (side == 0 and -lvl_price < price) or (side == 1 and lvl_price > price):
+                swap_qty = min(order_inc, lvl_qtys[0])    
+                swaps.append([lvl_qtys, swap_qty])
+                
+                order_inc -= swap_qty
+                order_red += swap_qty
+                    
+                margin_used -= abs(abs(lvl_price) - price) * swap_qty
+        
+        if margin_used > self.userBalance[1]:
+>>>>>>> a97ee9f7515196441d153f2fe5db13a2e04b2157
             return False
 
         self.userBalance[1] += margin_used
@@ -76,8 +119,15 @@ class position:
 
             if lvl_red and (not lvl_qtys[0]):
                 self.redLevels[side] -= 1
+<<<<<<< HEAD
 
         if ins_price not in side_levels:
+=======
+        
+        ins_price = self.price_mapping[side](price)
+        
+        if not ins_price in side_levels:
+>>>>>>> a97ee9f7515196441d153f2fe5db13a2e04b2157
             side_levels[ins_price] = [0, 0]
             if order_red:
                 self.redLevels[side] += 1
@@ -118,6 +168,7 @@ class position:
         # In order of the level price from best to worst, allocate the reducible position into levels with an increase component in the opposite side of the reducible position
 
         # Margin manipulation: Return the margin for orders in the level where the allocation from increase to reduce component was performed
+<<<<<<< HEAD
 
         alloc_side = 0 if self.reducible[0] else 1
         if self.reducible[1 - alloc_side]:
@@ -131,6 +182,18 @@ class position:
         if start_loc == -1:
             return
 
+=======
+        
+        alloc_side = 1 if self.reducible[0] else 0
+        if self.reducible[alloc_side]: 
+            raise Exception('Fatal Error: There exists a reducible component on both sides of the position')
+        
+        side_levels = self.levels[alloc_side]
+        reducible_to_net = self.reducible[1 - alloc_side]
+        start_loc = self.redLevels[alloc_side] - 1
+        if start_loc == -1: return 
+        
+>>>>>>> a97ee9f7515196441d153f2fe5db13a2e04b2157
         for n in range(start_loc, len(side_levels.keys())):
             lvl_price, lvl_qtys = side_levels.peekitem(n)
             if not lvl_qtys[1]:
@@ -144,14 +207,23 @@ class position:
             lvl_qtys[1] -= net_qty
 
             # Refund the margin for the order price level that had a quantity moved from the increase side to the reduce side
+<<<<<<< HEAD
             self.userBalance[1] -= net_qty * self.cost_function[1 - alloc_side](
                 lvl_price
             )
 
+=======
+            self.userBalance[1] += net_qty * self.cost_function[alloc_side](lvl_price)
+    
+    
+>>>>>>> a97ee9f7515196441d153f2fe5db13a2e04b2157
     def fill_order(self, order_price, order_side, fill_price, fill_qty):
         level_price = -order_price if order_side == 0 else order_price
 
         order_level = self.levels[order_side][level_price]
+        if fill_qty > sum(order_level):
+            raise Exception('Fatal accounting error: Order fill quantity exceeded total quantity at the level of the order price in account position manager')
+        
         fill_red = min(fill_qty, order_level[0])
         fill_inc = fill_qty - fill_red
 
@@ -178,18 +250,30 @@ class position:
         self.userBalance[1] += margin_returned + reduce_revenue
         self.userBalance[0] += reduce_revenue - fill_cost
 
+<<<<<<< HEAD
 
 balance = [10000, 10000]
+=======
+>>>>>>> a97ee9f7515196441d153f2fe5db13a2e04b2157
 
-pos = position(balance)
-pos.position = [0, 50]
-pos.reducible = [0, 50]
-pos.insert_order(70, 0, 80)
-pos.insert_order(75, 0, 70)
-pos.insert_order(72, 0, 15)
+def test():
+    # basic unit test for the position and margin manager
+    balance = [10000, 10000]
 
-pos.fill_order(75, 0, 70, 60)
-pos.debug()
+    pos = position(balance)
+    pos.position = [0, 50]
+    pos.reducible = [0, 50]
+    pos.insert_order(70, 0, 80)
+    pos.insert_order(75, 0, 70)
+    pos.insert_order(72, 0, 15)
 
+<<<<<<< HEAD
 pos.remove_order(75, 0, 10)
 pos.debug()
+=======
+    pos.fill_order(75, 0, 70, 60)
+    pos.debug()
+
+    pos.remove_order(75, 0, 10)
+    pos.debug()
+>>>>>>> a97ee9f7515196441d153f2fe5db13a2e04b2157
