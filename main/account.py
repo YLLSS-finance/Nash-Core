@@ -1,4 +1,6 @@
 
+# DEPRECATED
+
 # ORDER SCHEMA
 # 0 | timestamp
 # 1 | mpid
@@ -13,6 +15,8 @@ from position import position
 
 class account:
     def __init__(self, _master, _mpid):
+        raise Exception('This is deprecated')
+        
         # [balance, margin]
         self._master = _master
         self.mpid = int(_mpid)
