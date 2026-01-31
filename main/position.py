@@ -102,7 +102,7 @@ class position:
         order_price_level[0] -= remove_red
         order_price_level[1] -= remove_inc
 
-        self.userBalance[1] += remove_inc * self.cost_function[side](price)
+        self.userBalance[1] -= remove_inc * self.cost_function[side](price)
 
         self.reducible[1 - side] += remove_red
         self.alloc_reducible_position()
@@ -150,19 +150,15 @@ class position:
 
     def fill_order(self, order_price, order_side, fill_price, fill_qty):
         level_price = -order_price if order_side == 0 else order_price
-
         order_level = self.levels[order_side][level_price]
+
         fill_red = min(fill_qty, order_level[0])
         fill_inc = fill_qty - fill_red
 
-        price_improvement = abs(fill_price - order_price)
-
-        margin_returned = (
-            fill_inc * price_improvement
-        )  # Increase the available margin by this amount, this is caused by price improvement
-
         fill_cost = self.cost_function[order_side](fill_price) * fill_inc
         reduce_revenue = self.cost_function[1 - order_side](fill_price) * fill_red
+
+        used_margin = fill_inc * self.cost_function[order_side](order_price)
 
         order_level[0] -= fill_red
         order_level[1] -= fill_inc
@@ -174,8 +170,9 @@ class position:
         if fill_inc:
             self.alloc_reducible_position()
 
-        # TODO: Please review this balance change for integrity
-        self.userBalance[1] += margin_returned + reduce_revenue
+        # Update the user margin and balance
+        #
+        self.userBalance[1] -= used_margin
         self.userBalance[0] += reduce_revenue - fill_cost
 
 
